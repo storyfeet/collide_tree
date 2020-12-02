@@ -1,79 +1,32 @@
-use num_traits::{NumAssign, NumCast};
 use std::fmt::Debug;
 use std::ops::*;
 
+pub mod boxes;
 #[cfg(test)]
 mod test;
 
-pub trait BNum: PartialOrd + NumAssign + NumCast + Copy + Clone + Debug {}
-
-impl<T: PartialOrd + NumAssign + NumCast + Sized + Copy + Clone + Debug> BNum for T {}
-
-#[derive(Clone, Debug)]
-pub struct Bounds<T: BNum> {
-    x: T,
-    y: T,
-    w: T,
-    h: T,
+pub trait BoundBox: Sized {
+    ///Split the box in half somehow, normally this should vary in direction
+    fn split(&self) -> (Self, Self);
+    ///Test if one box collides with another.
+    fn hits(&self, b: &Self) -> bool;
 }
 
-pub fn qcast<A: NumCast, B: NumCast>(a: A) -> B {
-    NumCast::from(a).unwrap()
-}
-
-impl<T: BNum> Bounds<T> {
-    pub fn hits(&self, b: &Self) -> bool {
-        if self.x > b.x + b.w || b.x > self.x + self.w {
-            return false;
-        }
-        if self.y > b.y + b.h || b.y > self.y + self.h {
-            return false;
-        }
-        true
-    }
-
-    pub fn split(&self) -> (Self, Self) {
-        match self.w > self.h {
-            true => (
-                Bounds {
-                    w: self.w / qcast(2),
-                    ..*self
-                },
-                Bounds {
-                    x: self.x + self.w / qcast(2),
-                    w: self.w - (self.w / qcast(2)),
-                    ..*self
-                },
-            ),
-            false => (
-                Bounds {
-                    h: self.h / qcast(2),
-                    ..*self
-                },
-                Bounds {
-                    y: self.y + self.h / qcast(2),
-                    h: self.h - (self.h / qcast(2)),
-                    ..*self
-                },
-            ),
-        }
-    }
-}
-
-pub trait Located<T: BNum> {
+pub trait Located {
     type ID;
+    type Box: BoundBox;
     fn id(&self) -> Self::ID;
-    fn bounds(&self) -> Bounds<T>;
+    fn bounds(&self) -> Self::Box;
 }
 
-pub struct LocalTree<L: Located<T> + Debug, T: BNum> {
-    bound: Bounds<T>,
+pub struct LocalTree<L: Located + Debug> {
+    bound: L::Box,
     top: Vec<L>,
-    children: Option<Box<(LocalTree<L, T>, LocalTree<L, T>)>>,
+    children: Option<Box<(LocalTree<L>, LocalTree<L>)>>,
 }
 
-impl<L: Located<T> + Debug, T: BNum> LocalTree<L, T> {
-    pub fn new(bound: Bounds<T>) -> Self {
+impl<L: Located + Debug> LocalTree<L> {
+    pub fn new(bound: L::Box) -> Self {
         LocalTree {
             bound,
             top: Vec::new(),

@@ -1,3 +1,4 @@
+use crate::boxes::Bounds;
 use crate::*;
 use rand::Rng;
 use std::cmp::Ordering;
@@ -9,8 +10,9 @@ pub struct IBound {
     b: Bounds<f64>,
 }
 
-impl Located<f64> for IBound {
+impl Located for IBound {
     type ID = usize;
+    type Box = Bounds<f64>;
     fn id(&self) -> Self::ID {
         self.id
     }
@@ -24,7 +26,7 @@ impl Located<f64> for IBound {
 fn can_it_be_found() {
     let mut rnd = rand::thread_rng();
     let mut list = Vec::new();
-    for id in 0..50 {
+    for id in 0..1000 {
         let x: f64 = rnd.gen_range(0., 1000.);
         let y: f64 = rnd.gen_range(0., 1000.);
         let w = rnd.gen_range(0., 200.);
@@ -32,7 +34,7 @@ fn can_it_be_found() {
 
         let v = IBound {
             id,
-            b: Bounds { x, y, w, h },
+            b: Bounds::new(x, y, w, h),
         };
         list.push(v);
     }
@@ -54,12 +56,7 @@ fn can_it_be_found() {
     //time check tree
 
     let tree_time = Instant::now();
-    let mut tree: LocalTree<IBound, f64> = LocalTree::new(Bounds {
-        x: 0.,
-        y: 0.,
-        w: 1000.,
-        h: 1000.,
-    });
+    let mut tree: LocalTree<IBound> = LocalTree::new(Bounds::new(0., 0., 1000., 1000.));
 
     let mut t_col = Vec::new();
     for a in &list {

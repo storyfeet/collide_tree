@@ -81,8 +81,9 @@ impl<L: Located<T> + Debug, T: BNum> LocalTree<L, T> {
         }
     }
     pub fn add_item(&mut self, item: L, v: &mut Vec<(L::ID, L::ID)>) {
-        let ib = item.bounds();
         self.grow_children();
+
+        let ib = item.bounds();
         for t in &self.top {
             if t.bounds().hits(&ib) {
                 v.push((t.id(), item.id()));
@@ -104,15 +105,15 @@ impl<L: Located<T> + Debug, T: BNum> LocalTree<L, T> {
             None => self.top.push(item),
         }
     }
-    pub fn check_hits(&mut self, item: &L, v: &mut Vec<(L::ID, L::ID)>) {
+    pub fn check_hits(&self, item: &L, v: &mut Vec<(L::ID, L::ID)>) {
         let ib = item.bounds();
         for t in &self.top {
             if t.bounds().hits(&ib) {
                 v.push((t.id(), item.id()));
             }
         }
-        if let Some(b) = &mut self.children {
-            let (l, r) = b.deref_mut();
+        if let Some(b) = &self.children {
+            let (l, r) = b.deref();
             if l.bound.hits(&ib) {
                 l.check_hits(item, v);
             }
@@ -130,7 +131,6 @@ impl<L: Located<T> + Debug, T: BNum> LocalTree<L, T> {
             return;
         }
         let (l, r) = self.bound.split();
-        println!("l:{:?}   ,   r:{:?}", l, r);
 
         let (mut l, mut r) = (Self::new(l), Self::new(r));
         let mut newtop = Vec::new();
@@ -143,9 +143,6 @@ impl<L: Located<T> + Debug, T: BNum> LocalTree<L, T> {
                 _ => self.top.push(v),
             }
         }
-        println!("   ltop = {:?}", l.top);
-        println!("   rtop = {:?}", r.top);
-        println!("   top = {:?}", self.top);
         self.children = Some(Box::new((l, r)));
     }
 }

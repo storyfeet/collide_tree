@@ -58,7 +58,7 @@ fn main() {
 
         let mut t_col = Vec::new();
         for a in &list {
-            tree.add_item(a.clone(), &mut t_col);
+            tree.add_item(a.clone(), &mut |a, b| t_col.push((a.id(), b.id())));
         }
         t_col.len() > 0
     });

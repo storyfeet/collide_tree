@@ -33,24 +33,24 @@ impl<L: Located + Debug> LocalTree<L> {
             children: None,
         }
     }
-    pub fn add_item(&mut self, item: L, v: &mut Vec<(L::ID, L::ID)>) {
+    pub fn add_item<F: FnMut(&L, &L)>(&mut self, item: L, f: &mut F) {
         self.grow_children();
 
         let ib = item.bounds();
         for t in &self.top {
             if t.bounds().hits(&ib) {
-                v.push((t.id(), item.id()));
+                f(&t, &item);
             }
         }
         match &mut self.children {
             Some(b) => {
                 let (l, r) = b.deref_mut();
                 match (l.bound.hits(&ib), r.bound.hits(&ib)) {
-                    (true, false) => l.add_item(item, v),
-                    (false, true) => r.add_item(item, v),
+                    (true, false) => l.add_item(item, f),
+                    (false, true) => r.add_item(item, f),
                     _ => {
-                        l.check_hits(&item, v);
-                        r.check_hits(&item, v);
+                        l.check_hits(&item, f);
+                        r.check_hits(&item, f);
                         self.top.push(item);
                     }
                 }
@@ -58,20 +58,20 @@ impl<L: Located + Debug> LocalTree<L> {
             None => self.top.push(item),
         }
     }
-    pub fn check_hits(&self, item: &L, v: &mut Vec<(L::ID, L::ID)>) {
+    pub fn check_hits<F: FnMut(&L, &L)>(&self, item: &L, f: &mut F) {
         let ib = item.bounds();
         for t in &self.top {
             if t.bounds().hits(&ib) {
-                v.push((t.id(), item.id()));
+                f(&t, &item);
             }
         }
         if let Some(b) = &self.children {
             let (l, r) = b.deref();
             if l.bound.hits(&ib) {
-                l.check_hits(item, v);
+                l.check_hits(item, f);
             }
             if r.bound.hits(&ib) {
-                r.check_hits(item, v);
+                r.check_hits(item, f);
             }
         }
     }

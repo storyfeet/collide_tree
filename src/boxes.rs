@@ -62,7 +62,7 @@ impl<T: BNum> crate::BoundBox for Bounds<T> {
 }
 #[derive(Clone, Debug)]
 pub struct IdBound<I: Clone, B: BoundBox> {
-    id: I,
+    pub id: I,
     b: B,
 }
 
@@ -73,11 +73,7 @@ impl<I: Clone, B: BoundBox> IdBound<I, B> {
 }
 
 impl<I: Clone, B: BoundBox> crate::Located for IdBound<I, B> {
-    type ID = I;
     type Box = B;
-    fn id(&self) -> Self::ID {
-        self.id.clone()
-    }
 
     fn bounds(&self) -> B {
         self.b.clone()

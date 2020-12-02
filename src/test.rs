@@ -1,28 +1,9 @@
-use crate::boxes::Bounds;
+use crate::boxes::{Bounds, IdBound};
 use crate::*;
 use rand::Rng;
 use std::cmp::Ordering;
-use std::time::Instant;
 
-#[derive(Clone, Debug)]
-pub struct IBound {
-    id: usize,
-    b: Bounds<f64>,
-}
-
-impl Located for IBound {
-    type ID = usize;
-    type Box = Bounds<f64>;
-    fn id(&self) -> Self::ID {
-        self.id
-    }
-
-    fn bounds(&self) -> Bounds<f64> {
-        self.b.clone()
-    }
-}
-
-fn create_range_list(n: usize) -> Vec<IBound> {
+fn create_range_list(n: usize) -> Vec<IdBound<usize, Bounds<f64>>> {
     let mut rnd = rand::thread_rng();
     let mut list = Vec::new();
     for id in 0..n {
@@ -31,10 +12,7 @@ fn create_range_list(n: usize) -> Vec<IBound> {
         let w = rnd.gen_range(0., 200.);
         let h = rnd.gen_range(0., 200.);
 
-        let v = IBound {
-            id,
-            b: Bounds::new(x, y, w, h),
-        };
+        let v = IdBound::new(id, Bounds::new(x, y, w, h));
         list.push(v);
     }
     list
@@ -47,17 +25,17 @@ fn can_it_be_found() {
     let mut l_col = Vec::new();
     for a in 0..(list.len() - 1) {
         for b in (a + 1)..list.len() {
-            if list[a].b.hits(&list[b].b) {
+            if list[a].bounds().hits(&list[b].bounds()) {
                 l_col.push((a, b));
             }
         }
     }
 
-    let mut tree: LocalTree<IBound> = LocalTree::new(Bounds::new(0., 0., 1000., 1000.));
+    let mut tree = LocalTree::new(Bounds::new(0., 0., 1000., 1000.));
 
-    let mut t_col = Vec::new();
+    let mut t_col: Vec<(usize, usize)> = Vec::new();
     for a in &list {
-        tree.add_item(a.clone(), &mut t_col);
+        tree.add_item(a.clone(), &mut |a, b| t_col.push((a.id, b.id)));
     }
 
     t_col.sort_by(|(a1, a2), (b1, b2)| match a1.cmp(b1) {
@@ -68,30 +46,3 @@ fn can_it_be_found() {
     assert_eq!(l_col.len(), t_col.len());
     assert_eq!(l_col, t_col);
 }
-
-/* #[bench]
-fn bench_square_list(b: &mut Bencher) {
-    b.iter(|| {
-        let list = create_range_list(1000);
-        let mut l_col = Vec::new();
-        for a in 0..(list.len() - 1) {
-            for b in (a + 1)..list.len() {
-                if list[a].b.hits(&list[b].b) {
-                    l_col.push((a, b));
-                }
-            }
-        }
-    })
-}
-#[bench]
-fn bench_tree_list(b: &mut Bencher) {
-    b.iter(|| {
-        let list = create_range_list(1000);
-        let mut tree: LocalTree<IBound> = LocalTree::new(Bounds::new(0., 0., 1000., 1000.));
-
-        let mut t_col = Vec::new();
-        for a in &list {
-            tree.add_item(a.clone(), &mut t_col);
-        }
-    })
-}*/

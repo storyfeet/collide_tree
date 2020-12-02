@@ -13,9 +13,7 @@ pub trait BoundBox: Sized + Clone {
 }
 
 pub trait Located {
-    type ID;
     type Box: BoundBox;
-    fn id(&self) -> Self::ID;
     fn bounds(&self) -> Self::Box;
 }
 
@@ -97,6 +95,28 @@ impl<L: Located + Debug> LocalTree<L> {
             }
         }
         self.children = Some(Box::new((l, r)));
+    }
+
+    pub fn for_each_collision<F: FnMut(&L, &L)>(&self, f: &mut F) {
+        if self.top.len() > 0 {
+            for a in 0..self.top.len() - 1 {
+                for b in (a + 1)..self.top.len() {
+                    if self.top[a].bounds().hits(&self.top[b].bounds()) {
+                        f(&self.top[a], &self.top[b])
+                    }
+                }
+            }
+        }
+
+        if let Some(b) = &self.children {
+            let (l, r) = b.deref();
+            for a in &self.top {
+                l.check_hits(a, f);
+                r.check_hits(a, f);
+            }
+            l.for_each_collision(f);
+            r.for_each_collision(f);
+        }
     }
 }
 

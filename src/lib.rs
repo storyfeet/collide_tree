@@ -5,7 +5,7 @@ pub mod boxes;
 #[cfg(test)]
 mod test;
 
-pub trait BoundBox: Sized {
+pub trait BoundBox: Sized + Clone {
     ///Split the box in half somehow, normally this should vary in direction
     fn split(&self) -> (Self, Self);
     ///Test if one box collides with another.

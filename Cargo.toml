@@ -9,3 +9,12 @@ edition = "2018"
 [dependencies]
 num-traits = "0.2.14"
 rand = "0.7.3"
+
+[lib]
+name="collide_tree"
+path="src/lib.rs"
+
+
+[[bin]]
+name = "benchmarks"
+path= "src/my_benchmark.rs"

@@ -1,26 +1,10 @@
-use crate::boxes::{Bounds, IdBound};
+use crate::boxes::Bounds;
 use crate::*;
-use rand::Rng;
 use std::cmp::Ordering;
-
-fn create_range_list(n: usize) -> Vec<IdBound<usize, Bounds<f64>>> {
-    let mut rnd = rand::thread_rng();
-    let mut list = Vec::new();
-    for id in 0..n {
-        let x: f64 = rnd.gen_range(0., 1000.);
-        let y: f64 = rnd.gen_range(0., 1000.);
-        let w = rnd.gen_range(0., 200.);
-        let h = rnd.gen_range(0., 200.);
-
-        let v = IdBound::new(id, Bounds::new(x, y, w, h));
-        list.push(v);
-    }
-    list
-}
 
 #[test]
 fn can_it_be_found() {
-    let list = create_range_list(1000);
+    let list = crate::test_util::create_range_list(1000);
 
     let mut l_col = Vec::new();
     for a in 0..(list.len() - 1) {
@@ -31,7 +15,7 @@ fn can_it_be_found() {
         }
     }
 
-    let mut tree = LocalTree::new(Bounds::new(0., 0., 1000., 1000.));
+    let mut tree = CollideTree::new(Bounds::new(0., 0., 1000., 1000.));
 
     let mut t_col: Vec<(usize, usize)> = Vec::new();
     for a in &list {

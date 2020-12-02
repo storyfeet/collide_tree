@@ -1,7 +1,7 @@
 extern crate collide_tree;
-use collide_tree::boxes::{Bounds, IdBound};
+use collide_tree::boxes::Bounds;
+use collide_tree::test_util::create_range_list;
 use collide_tree::*;
-use rand::Rng;
 use std::time::{Duration, Instant};
 
 fn b_mark<F: Fn() -> bool>(s: &str, f: F) {
@@ -24,21 +24,6 @@ fn b_mark<F: Fn() -> bool>(s: &str, f: F) {
     );
 }
 
-fn create_range_list(n: usize) -> Vec<IdBound<usize, Bounds<f64>>> {
-    let mut rnd = rand::thread_rng();
-    let mut list = Vec::new();
-    for id in 0..n {
-        let x: f64 = rnd.gen_range(0., 1000.);
-        let y: f64 = rnd.gen_range(0., 1000.);
-        let w = rnd.gen_range(0., 200.);
-        let h = rnd.gen_range(0., 200.);
-
-        let v = IdBound::new(id, Bounds::new(x, y, w, h));
-        list.push(v);
-    }
-    list
-}
-
 fn main() {
     b_mark("square", || {
         let list = create_range_list(1000);
@@ -54,7 +39,7 @@ fn main() {
     });
     b_mark("tree", || {
         let list = create_range_list(1000);
-        let mut tree = LocalTree::new(Bounds::new(0., 0., 1000., 1000.));
+        let mut tree = CollideTree::new(Bounds::new(0., 0., 1000., 1000.));
 
         let mut t_col = Vec::new();
         for a in &list {

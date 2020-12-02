@@ -1,9 +1,54 @@
+//! Collide Tree
+//! ============
+//!
+//! The following Test Shows the naive method, and the tree method will get the same results.
+//!
+//! ```rust
+//! use collide_tree::test_util::create_range_list;
+//! use collide_tree::*;
+//! use collide_tree::boxes::*;
+//! use std::cmp::Ordering;
+//!
+//!
+//! let list = create_range_list(1000);
+//!
+//! // NAIVE collision detection
+//! let mut l_col = Vec::new();
+//! for a in 0..(list.len() - 1) {
+//!     for b in (a + 1)..list.len() {
+//!         if list[a].bounds().hits(&list[b].bounds()) {
+//!             l_col.push((a, b));
+//!         }
+//!     }
+//! }
+//! // COLLIDE_TREE collision detection
+//! // The tree is largely expected to be created and filled every frame.
+//! let mut tree = CollideTree::new(Bounds::new(0., 0., 1000., 1000.));
+//!
+//! let mut t_col: Vec<(usize, usize)> = Vec::new();
+//! for a in &list {
+//!     //Collisions are detected as you add items to the tree
+//!     //The closure is called on every collision
+//!     tree.add_item(a.clone(), &mut |a, b| t_col.push((a.id, b.id)));
+//! }
+//!
+//! // Sort so results match on order
+//! t_col.sort_by(|(a1, a2), (b1, b2)| match a1.cmp(b1) {
+//!     Ordering::Equal => a2.cmp(b2),
+//!     v => v,
+//! });
+//!
+//! assert_eq!(l_col.len(), t_col.len());
+//! assert_eq!(l_col, t_col);
+//! ```
+
 use std::fmt::Debug;
 use std::ops::*;
 
 pub mod boxes;
 #[cfg(test)]
 mod test;
+pub mod test_util;
 
 pub trait BoundBox: Sized + Clone {
     ///Split the box in half somehow, normally this should vary in direction
@@ -17,15 +62,15 @@ pub trait Located {
     fn bounds(&self) -> Self::Box;
 }
 
-pub struct LocalTree<L: Located + Debug> {
+pub struct CollideTree<L: Located + Debug> {
     bound: L::Box,
     top: Vec<L>,
-    children: Option<Box<(LocalTree<L>, LocalTree<L>)>>,
+    children: Option<Box<(CollideTree<L>, CollideTree<L>)>>,
 }
 
-impl<L: Located + Debug> LocalTree<L> {
+impl<L: Located + Debug> CollideTree<L> {
     pub fn new(bound: L::Box) -> Self {
-        LocalTree {
+        CollideTree {
             bound,
             top: Vec::new(),
             children: None,
